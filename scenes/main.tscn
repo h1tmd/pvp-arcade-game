@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://dtac6wn5cs8wi"]
+
+[ext_resource type="PackedScene" uid="uid://byesywrlkfpf" path="res://scenes/maze.tscn" id="1_mfkvq"]
+[ext_resource type="PackedScene" uid="uid://e57wjv2l3ami" path="res://scenes/player.tscn" id="2_hbmhm"]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="Maze" parent="." instance=ExtResource("1_mfkvq")]
+grid_size = 12
+
+[node name="Player" parent="." instance=ExtResource("2_hbmhm")]
+position = Vector2(31, 33)
+scale = Vector2(0.3, 0.3)
+speed = 350
+acceleration = 30
