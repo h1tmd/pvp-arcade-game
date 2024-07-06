@@ -17,12 +17,12 @@ var directions = [
 	Vector2i(-3, 0), # West
 ]
 
-
-func _ready() -> void:
+func _ready():
 	height = grid_size
 	width = grid_size
 	generate_border()
 	generate_maze(start_coords)
+	#split(9)
 
 
 func _input(_event):
@@ -84,3 +84,22 @@ func generate_maze(start: Vector2i):
 				stack.append(new_pos)
 				place_path(current, new_pos)
 				break
+
+
+func split(num):
+	# This function divides the maze into equal number of parts
+	var dimension = grid_size
+	var n = sqrt(num)
+	var edge_length = dimension / n
+	var subsquare = [0]
+	for i in range(n):
+		subsquare.append((i + 1) * edge_length)
+	for i in range(len(subsquare) - 1):
+		for j in range(len(subsquare) - 1):
+			var tile = TileMap.new()
+			tile.tile_set = load("res://tilemap.tres")
+			for y in range(subsquare[i], subsquare[i + 1]):
+				for x in range(subsquare[j], subsquare[j + 1]):
+					var tile_atlas = get_cell_atlas_coords(main_layer, Vector2i(x, y))
+					tile.set_cell(main_layer,Vector2i(x,y), SOURCE_ID, tile_atlas)
+			get_parent().add_child.call_deferred(tile)
