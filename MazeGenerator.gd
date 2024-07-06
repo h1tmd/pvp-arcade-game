@@ -5,8 +5,8 @@ const normal_wall_atlas_coords = Vector2i(1, 1)
 const walkable_atlas_coords = Vector2i(1, 4)
 const SOURCE_ID = 0
 
-@export var grid_size = 32
-@export var start_coords = Vector2i(0, 0)
+@export var grid_size := 32
+@export var start_coords := Vector2i(0, 0)
 
 var height : int
 var width : int
@@ -22,7 +22,7 @@ func _ready():
 	width = grid_size
 	generate_border()
 	generate_maze(start_coords)
-	#split(9)
+	#split(3)
 
 
 func _input(_event):
@@ -33,21 +33,21 @@ func _input(_event):
 
 
 func generate_border():
-	var border = 3 - (grid_size % 3)
+	var border : int = 3 - (grid_size % 3)
 	for x in range (-1, width + border):
 		for y in range(-1, height + border):
 			set_cell(main_layer, Vector2i(x, y), SOURCE_ID, normal_wall_atlas_coords)
 
 
+# Place path between two points
 func place_path(pos1: Vector2i, pos2: Vector2i):
-	# Places path around two points
 	var topleft: Vector2i
 	var bottomright: Vector2i
-	# vertical
+	# Vertical 
 	if pos1.x == pos2.x:
 		topleft = Vector2i(pos1.x, min(pos1.y, pos2.y))
 		bottomright = Vector2i(pos1.x + 1, max(pos1.y, pos2.y) + 1)
-	# horizontal
+	# Horizontal
 	else:
 		topleft = Vector2i(min(pos1.x, pos2.x), pos1.y)
 		bottomright = Vector2i(max(pos1.x, pos2.x) + 1, pos1.y + 1)
@@ -56,50 +56,48 @@ func place_path(pos1: Vector2i, pos2: Vector2i):
 			set_cell(main_layer, Vector2i(x, y), SOURCE_ID, walkable_atlas_coords)
 
 
-func can_move_to(current: Vector2i):
-	# Returns true if it is within the maze
-	return (
-			current.x >= 0 and current.y >= 0 and
-			current.x <= width and current.y <= height
-	)
+func is_within_maze(current: Vector2i):
+	return current.x >= 0 and current.y >= 0 and\
+	current.x <= width and current.y <= height
 
 
 func generate_maze(start: Vector2i):
-	var stack: Array[Vector2i] = [start]
-	var visited = []
+	var stack : Array[Vector2i] = [start]
+	var visited : Array[Vector2i] = []
 	while stack.size() > 0:
-		var current = stack.pop_back() as Vector2i
+		var current : Vector2i = stack.pop_back()
 		
-		# add position to visited
+		# Mark as visited
 		if current not in visited:
 			visited.append(current)
 		
 		# Search all neighbors
 		directions.shuffle()
-		for pos in directions:
-			var new_pos = current + pos
-			# if new random position is new and not a wall
-			if new_pos not in visited and can_move_to(new_pos):
+		for direction in directions:
+			var neighbor : Vector2i = current + direction
+			
+			if neighbor not in visited and is_within_maze(neighbor):
 				stack.append(current)
-				stack.append(new_pos)
-				place_path(current, new_pos)
+				place_path(current, neighbor)
+				stack.append(neighbor)
 				break
 
 
+# Divides the maze into equal number of parts
 func split(num):
-	# This function divides the maze into equal number of parts
-	var dimension = grid_size
-	var n = sqrt(num)
-	var edge_length = dimension / n
-	var subsquare = [0]
-	for i in range(n):
-		subsquare.append((i + 1) * edge_length)
-	for i in range(len(subsquare) - 1):
-		for j in range(len(subsquare) - 1):
-			var tile = TileMap.new()
-			tile.tile_set = load("res://tilemap.tres")
-			for y in range(subsquare[i], subsquare[i + 1]):
-				for x in range(subsquare[j], subsquare[j + 1]):
+	var length_per_part : int = grid_size / num
+	var parts : Array[int] = [0]
+	for i in range(num):
+		parts.append((i + 1) * length_per_part)
+	
+	for i in range(len(parts) - 1):
+		for j in range(len(parts) - 1):
+			var maze_part = TileMap.new()
+			maze_part.tile_set = load("res://tilemap.tres")
+			
+			for y in range(parts[i], parts[i + 1]):
+				for x in range(parts[j], parts[j + 1]):
 					var tile_atlas = get_cell_atlas_coords(main_layer, Vector2i(x, y))
-					tile.set_cell(main_layer,Vector2i(x,y), SOURCE_ID, tile_atlas)
-			get_parent().add_child.call_deferred(tile)
+					maze_part.set_cell(main_layer,Vector2i(x,y), SOURCE_ID, tile_atlas)
+			
+			get_parent().add_child.call_deferred(maze_part)
